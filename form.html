@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Завантаження файлів</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px 20px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #007bff;
+            background-color: #f0f8ff;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        button:hover:not(:disabled) {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #a0a0a0;
+            cursor: not-allowed;
+        }
+        #file-list {
+            margin-top: 15px;
+            text-align: left;
+            font-size: 14px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        #progress {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Завантажте ваші файли</h2>
+        <p>Перетягніть файли сюди або натисніть, щоб вибрати. Підтримуються кілька файлів.</p>
+        
+        <form id="uploadForm" 
+              action="https://pngstudio.app.n8n.cloud/webhook-test/c0aca1cc-d77b-463d-83cc-1e64986d687a" 
+              method="POST" 
+              enctype="multipart/form-data">
+            <div class="drop-zone" id="dropZone">
+                <p>Перетягніть файли сюди або натисніть</p>
+            </div>
+            <input type="file" id="fileInput" name="files" multiple required>
+            <input type="hidden" id="order_id" name="order_id">
+            
+            <button type="submit" id="submitBtn" disabled>Надіслати</button>
+        </form>
+        
+        <div id="file-list"></div>
+        <div id="progress"></div>
+    </div>
+
+    <script>
+        // Зчитування order_id з URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('order_id');
+        if (orderId) {
+            document.getElementById('order_id').value = orderId;
+            document.querySelector('h2').textContent = `Завантаження файлів`;
+        }
+
+        // Елементи
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('file-list');
+        const submitBtn = document.getElementById('submitBtn');
+        const progress = document.getElementById('progress');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            fileInput.files = e.dataTransfer.files;
+            updateFileListAndButton();
+        });
+
+        fileInput.addEventListener('change', updateFileListAndButton);
+
+        function updateFileListAndButton() {
+            fileList.innerHTML = '';
+            const files = fileInput.files;
+
+            if (files.length === 0) {
+                submitBtn.disabled = true;
+                return;
+            }
+
+            submitBtn.disabled = false;
+
+            for (let file of files) {
+                const p = document.createElement('p');
+                p.textContent = `📄 ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} МБ)`;
+                fileList.appendChild(p);
+            }
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', () => {
+            progress.textContent = 'Надсилання файлів... Пожалуйста, зачекайте.';
+            submitBtn.disabled = true;
+        });
+    </script>
+</body>
+</html>
